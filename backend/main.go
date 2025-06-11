@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"context"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -21,13 +22,51 @@ type AskResponse struct {
 	Answer string `json:"answer"`
 }
 
-func callLLM(prompt string) string {
+func LLMToAnswer(prompt string) string {
 	// Replace with real LLM API call using env vars if needed
 	return fmt.Sprintf("[LLM Answer based on prompt: %.60s...]", prompt)
+}
+func QuestionToSQL(question string) string {
+	//replace with real SQL query generation logic
+	return fmt.Sprintf("[SQL Query based on question: %.60s...]", question)
+}
+
+func FormatSQLResult(rows *sql.Rows) []map[string]interface{} {
+	columns, err := rows.Columns()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rowsData := []map[string]interface{}{}
+	for rows.Next() {
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range columns {
+			valuePtrs[i] = &values[i]
+		}
+		if err := rows.Scan(valuePtrs...); err != nil {
+			log.Printf("scan error: %v", err)
+			continue
+		}
+		rowData := make(map[string]interface{})
+		for i, col := range columns {
+			val := values[i]
+			b, ok := val.([]byte)
+			if ok {
+				rowData[col] = string(b)
+			} else {
+				rowData[col] = val
+			}
+		}
+		rowsData = append(rowsData, rowData)
+	}
+
+	return rowsData
 }
 
 func main() {
 	// Load .env
+	ctx := context.Background()
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("No .env file found")
@@ -49,7 +88,7 @@ func main() {
 
     // Ping the database to check if the connection is working
 
-    err := db.Ping()
+    err = db.Ping()
 	if err != nil {
 		log.Fatal(ctx, "SQL DATABASE PING FAILED!", err)
 	}
@@ -62,28 +101,24 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 			return
 		}
-
+		sqlQuery := QuestionToSQL(req.Question)
 		// Query banner data for last month (hardcoded for demo)
-		rows, err := db.Query("SELECT name, impressions, ctr FROM banners WHERE month = '2024-05'")
+		rows, err := db.Query(sqlQuery)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB query failed"})
 			return
 		}
 		defer rows.Close()
 
-		var bannerLines []string
-		for rows.Next() {
-			var name string
-			var impressions int
-			var ctr float64
-			if err := rows.Scan(&name, &impressions, &ctr); err != nil {
-				continue
-			}
-			bannerLines = append(bannerLines, fmt.Sprintf("%s: %d impressions, %.1f%% CTR", name, impressions, ctr))
+		bannerData := FormatSQLResult(rows)
+		jsonBytes, err := json.MarshalIndent(bannerData, "", "  ")
+		if err != nil {
+			log.Fatalf("json error: %v", err)
 		}
-		bannerData := strings.Join(bannerLines, "\n")
-		prompt := fmt.Sprintf("Here is the banner data for last month:\n%s\n%s", bannerData, req.Question)
-		answer := callLLM(prompt)
+		prompt := fmt.Sprintf("Analyze this data:\n%s\n\n%s", string(jsonBytes), req.Question)
+
+		// prompt := fmt.Sprintf("Here is the banner data for last month:\n%s\n%s", bannerData, req.Question)
+		answer := LLMToAnswer(prompt)
 		c.JSON(http.StatusOK, AskResponse{Answer: answer})
 	})
 
