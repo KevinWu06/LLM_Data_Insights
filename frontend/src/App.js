@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TableauEmbed from './tableau_embed';
 
 function App() {
   const [question, setQuestion] = useState('');
@@ -40,6 +41,19 @@ function App() {
           <div>{answer}</div>
         </div>
       )}
+
+      {/* <h1>Tableau Dashboard</h1>
+      <TableauEmbed /> */}
+
+      <div style={{ width: "175%", margin: "40px auto" }}>
+        <tableau-viz
+          src="https://public.tableau.com/views/CreativeWear-Out/Dashboard1"
+          style={{
+            width: "175%",
+            height: "800px",
+          }}
+        ></tableau-viz>
+      </div>
     </div>
   );
 }
