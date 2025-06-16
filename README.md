@@ -14,13 +14,9 @@ Web application to support LLM-driven data insights
    ```sh
    pip install -r requirements.txt
    ```
-4. Initialize the database:
+4. Start server:
    ```sh
-   python init_db.py
-   ```
-5. Start the FastAPI server:
-   ```sh
-   uvicorn main:app --reload
+   go run main.go
    ```
 
 ## Frontend (React)
@@ -37,5 +33,9 @@ Web application to support LLM-driven data insights
    ```sh
    npm start
    ```
+4. (If you want to run on different port)
+   ```sh
+   PORT=YOUR_PORT_NUM npm start
+   ```
 
-The React app will run on `http://localhost:3000` and the FastAPI backend on `http://localhost:8000`.
+The React app will run on `http://localhost:3000` and the backend server on `http://localhost:8000`. If you want to change the backend port, adjust PORT in .env and make the port in services.js point to your desired port number
