@@ -5,6 +5,7 @@ export default function TableauEmbed() {
 
   return (
     <div style={{ width: "200%", maxWidth: "1200px", margin: "0 auto" }}>
+      <h2>Banner Data Dashboard</h2>
       <tableau-viz
         ref={vizRef}
         src="https://public.tableau.com/views/CreativeWear-Out/Dashboard1"
