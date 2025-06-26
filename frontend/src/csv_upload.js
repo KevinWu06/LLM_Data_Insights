@@ -1,27 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
   Typography,
-  TextField,
   Snackbar,
   Alert,
   CircularProgress
 } from '@mui/material';
 import { uploadCSV } from './services';
 
-const CsvUpload = () => {
+
+const CsvUpload = ({ setSessionId }) => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState(false);
-  const [sessionID, setSessionID] = useState('')
-
-  useEffect(() => {
-    if (sessionID) {
-      console.log("Session ID updated:", sessionID);
-    }
-  }, [sessionID]);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -39,9 +32,11 @@ const CsvUpload = () => {
 
     setUploading(true);
     try {
-      const res = await uploadCSV(formData)
-      setSessionID(res.data.session_id);
-      console.log(sessionID)
+      const res = await uploadCSV(formData);
+      if (res.data.session_id) {
+        setSessionId(res.data.session_id); // Pass session_id up to parent (e.g., App.js)
+        localStorage.setItem('session_id', res.data.session_id);
+      }
       setMessage(res.data.message || 'Upload successful');
       setSuccess(true);
     } catch (err) {

@@ -1,8 +1,9 @@
 // AskComponent.js
 import React, { useState } from 'react';
-import { SendQueryAPI } from './services.js'; // adjust the path as needed
+import { SendQueryAPI } from './services.js'; 
 
-function AskComponent() {
+
+function AskComponent({ sessionId }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,10 +12,15 @@ function AskComponent() {
     e.preventDefault();
     if (!question) return;
 
+    if (!sessionId) {
+      setAnswer('Please upload a CSV file first.');
+      return;
+    }
+
     setLoading(true);
-    try {
-      const res = await SendQueryAPI(question);
-      setAnswer(res.data.answer); // assuming your backend returns { answer: "..." }
+    try { 
+      const res = await SendQueryAPI(question, sessionId);
+      setAnswer(res.data.answer);
     } catch (err) {
       console.error('Failed to fetch answer:', err);
       setAnswer('Error getting answer. Please try again.');

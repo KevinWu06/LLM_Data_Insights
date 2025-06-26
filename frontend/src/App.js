@@ -4,11 +4,12 @@ import AskComponent from './ask_component';
 import CsvUpload from './csv_upload';
 
 function App() {
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem('session_id') || '');
 
   return (
-    <div >
-      <CsvUpload/>
-      <AskComponent />
+    <div>
+      <CsvUpload setSessionId={setSessionId} />
+      <AskComponent sessionId={sessionId} />
       <TableauEmbed />
     </div>
   );
