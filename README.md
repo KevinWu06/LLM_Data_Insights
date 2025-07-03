@@ -14,13 +14,10 @@ Web application to support LLM-driven data insights
    ```sh
    pip install -r requirements.txt
    ```
-4. Initialize the database:
-   ```sh
-   python init_db.py
    ```
-5. Start the FastAPI server:
+4. Start the FastAPI server:
    ```sh
-   uvicorn main:app --reload
+   uvicorn llm_server:app --reload --port 8000
    ```
 
 ## Frontend (React)
