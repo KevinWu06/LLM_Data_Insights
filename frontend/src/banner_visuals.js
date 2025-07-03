@@ -7,13 +7,13 @@ const isImageUrl = (url) => {
 };
 
 const isHtmlBanner = (url) => {
-  // Heuristic: if the URL contains '/HTML/' or ends with a slash, treat as HTML/animated banner
   return url && (url.includes('/HTML/') || url.endsWith('/'));
 };
 
-const CARD_HEIGHT = 700; // taller
-const CARD_WIDTH = 300;  // wider
-const MEDIA_HEIGHT = 600; // more space for image/iframe
+//most banners are 300x600
+const CARD_HEIGHT = 700; 
+const CARD_WIDTH = 300;  
+const MEDIA_HEIGHT = 600; 
 
 const BannerVisuals = () => {
   const banners = Object.entries(bannerImageMap)

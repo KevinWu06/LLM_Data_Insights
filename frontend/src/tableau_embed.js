@@ -3,9 +3,9 @@ import bannerImageMap from './embeddedImages';
 
 const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-Out/Dashboard1";
 
-// NOTE: To get filter values from Tableau, we need to use the Tableau JS API.
-// The tableau-viz web component exposes the .viz property, which is a Tableau Viz object.
-// We'll use that to get the filters and their values.
+// NOTE: To get filter values from Tableau, need to use the Tableau JS API.
+// The tableau-viz web component exposes the .viz property, which is a Tableau Viz object
+// Use that to get the filters and their values
 
 export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes, style }) {
   const containerRef = useRef(null);

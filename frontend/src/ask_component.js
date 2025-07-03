@@ -1,11 +1,10 @@
 // AskComponent.js
 import React, { useState, useRef, useEffect } from 'react';
 import { SendQueryAPI } from './services.js';
-// import { getAccessToken } from './authConfig.js';
 
 function AskComponent({ instance, account, loginRequest, sessionId, systemMessage }) {
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState([]); // { sender: 'user'|'bot', text: string }
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -32,7 +31,7 @@ function AskComponent({ instance, account, loginRequest, sessionId, systemMessag
     setLoading(true);
     setQuestion('');
     try {
-      // Call your API with sessionId
+      // Call API with sessionId
       const res = await SendQueryAPI(userMessage.text, sessionId);
       setMessages((prev) => [
         ...prev,

@@ -22,6 +22,7 @@ function App() {
   const [csvColumns, setCsvColumns] = useState([]);
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [csvFileName, setCsvFileName] = useState("");
+  
   // Persist selected checkboxes for Tableau
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
 
