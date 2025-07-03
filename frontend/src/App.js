@@ -22,6 +22,8 @@ function App() {
   const [csvColumns, setCsvColumns] = useState([]);
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [csvFileName, setCsvFileName] = useState("");
+  // Persist selected checkboxes for Tableau
+  const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
 
   const handleLogin = () => {
     instance.loginPopup({loginRequest, prompt: "consent"}).catch(console.error);
@@ -81,7 +83,13 @@ function App() {
           <Tab label="Banner Visuals" />
         </Tabs>
         <Box sx={{ flexGrow: 1, width: '100%', display: 'flex', justifyContent: 'center' }}>
-          {tab === 0 && <TableauEmbed instance={instance} account={account} />}
+          <TableauEmbed
+            instance={instance}
+            account={account}
+            selectedCheckboxes={selectedCheckboxes}
+            setSelectedCheckboxes={setSelectedCheckboxes}
+            style={{ display: tab === 0 ? 'block' : 'none' }}
+          />
           {tab === 1 && <KnowledgeBaseAssistant instance={instance} account={account} loginRequest={loginRequest} />}
           {tab === 2 && (
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

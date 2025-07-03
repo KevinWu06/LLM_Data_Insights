@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import bannerImageMap from './embeddedImages';
-import windowTableau from 'tableau-api'; // Only if you need types, not required for global
 
 const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-Out/Dashboard1";
 
@@ -8,11 +7,10 @@ const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-Out/Dashboard
 // The tableau-viz web component exposes the .viz property, which is a Tableau Viz object.
 // We'll use that to get the filters and their values.
 
-export default function TableauEmbed() {
+export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes, style }) {
   const containerRef = useRef(null);
   const vizRef = useRef(null);
   const unregisterRef = useRef(null); // for cleanup
-  const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
 
   // Helper to get the first worksheet in the dashboard
   async function getFirstWorksheet(viz) {
@@ -94,13 +92,10 @@ export default function TableauEmbed() {
     }
     return () => {
       if (unregisterRef.current) unregisterRef.current();
-      if (vizRef.current) {
-        vizRef.current.dispose();
-        vizRef.current = null;
-      }
+      // Do NOT dispose vizRef.current, so Tableau viz persists across tab switches
     };
     // eslint-disable-next-line
-  }, []);
+  }, [setSelectedCheckboxes]);
 
   // Helper to check if a URL is a direct image
   const isImageUrl = (url) => {
@@ -133,6 +128,7 @@ export default function TableauEmbed() {
         minHeight: 800,
         flexDirection: 'column',
         alignItems: 'center',
+        ...style,
       }}
     >
       <h2
