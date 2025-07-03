@@ -7,8 +7,14 @@ var API_GATEWAY = (() => {
 
 export const SendQueryAPI = async (query, session_id) => {
   const url = API_GATEWAY + '/ask';
+  return axios.post(url, { question: query, session_id }, {
+    withCredentials: true,
+  });
+};
 
-  return axios.post(url, { question: query , session_id: session_id}, {
+export const sendKBQueryAPI = async (query, access_token) => {
+  const url = API_GATEWAY + '/kb_ask';
+  return axios.post(url, { question: query, accessToken: access_token }, {
     withCredentials: true,
   });
 };
