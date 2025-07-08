@@ -83,7 +83,7 @@ function AskComponent({ instance, account, loginRequest, sessionId, systemMessag
             opacity: 0.8,
             fontStyle: 'italic'
           }}>
-            Ask a question about banners to get started.
+            Ask a question (about uploaded dataset) to get started.
           </div>
         )}
         {messages.map((msg, idx) => (

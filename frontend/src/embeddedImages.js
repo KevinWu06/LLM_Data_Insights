@@ -20,11 +20,11 @@ const bannerImageMap = {
     "CR and DOCR" :                 "",
     "KOL" :                         "",
     "Legacy Banner" :               "",
-    "mlDH1 BioPharm" :              "",
-    "Promotional HCP (Anim.)" :     "",
-    "Promotional HCP (Stat.)" :     "",
+    "mlDH1 BioPharm" :              "https://banners.culthealth.com/SERVIER/AML/AML-TIB-003717-1/300x600/", //not sure
+    "Promotional HCP (Anim.)" :     "https://banners.culthealth.com/SERVIER/GLM/SVR-VOR-8889273085/1b/300x600/", //not sure
+    "Promotional HCP (Stat.)" :     "https://banners.culthealth.com/SERVIER/GLM/SVR-VOR-8889273085/1b/300x600/", //not sure, and static is a file
     "R1" :                          "",
-    "Rob Testimonial (Stat.)" :     "",
+    "Rob Testimonial (Stat.)" :     "https://banners.culthealth.com/SERVIER/GLM/GLM-VOR-004020-1/v18/a/300x600/", //static is a file
     "Testing" :                     "",
     "Testing (V1)" :                "",
     "Testing (V2)" :                "",
