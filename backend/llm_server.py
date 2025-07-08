@@ -39,7 +39,6 @@ app.add_middleware(
 )
 # model setup
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-print(GEMINI_API_KEY)
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(model_name="gemini-2.5-flash")
 
@@ -350,7 +349,7 @@ def call_copilot_retrieval_api(
     else:
         print(f"Error: {response.status_code} - {response.text}")
         return None
-
+    
 def parse_retrieval_response(response: dict) -> str:
     hits = response.get("retrievalHits", [])
     if not hits:
@@ -362,6 +361,29 @@ def parse_retrieval_response(response: dict) -> str:
             texts.append(extract.get("text", ""))
 
     return "\n\n".join(texts)
+
+def retrieval_api_to_natural_language_response(question: str, textbits: str) -> str:
+    query = f"""
+            Use the information below to answer the user's question as accurately and concisely as possible.
+
+            If the question is clearly about the provided information, answer using only that information.
+
+            If the question is general knowledge or not related to the provided information, answer normally.
+
+            If the answer cannot be determined from the information and is not general knowledge, say so clearly.
+
+            When referring to the provided information, call it the knowledge base.
+
+            Question:
+            {question}
+
+            Information:
+            {textbits}
+            """
+    response = model.generate_content(query)
+    if not response.candidates or not response.candidates[0].content.parts:
+        return ""
+    return response.text
 
 # Upload CSV endpoint
 @app.post("/upload_csv")
@@ -391,7 +413,8 @@ async def kb_ask(request: KbAskRequest):
     print(f"Received question: {request.question}")
     raw_response = call_copilot_retrieval_api(request.accessToken, request.question)
     parsed_text = parse_retrieval_response(raw_response)
-    return AskResponse(answer=parsed_text)
+    natural_language_response = retrieval_api_to_natural_language_response(request.question, parsed_text)
+    return AskResponse(answer=natural_language_response)
 
 
 if __name__ == "__main__":
