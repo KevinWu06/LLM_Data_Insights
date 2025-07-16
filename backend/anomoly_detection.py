@@ -4,26 +4,34 @@ import matplotlib.dates as mdates
 import io
 import base64
 import numpy as np
-from scipy.stats import beta
+from scipy.stats import norm
 
 def clean_floats(arr):
     # Replace NaN, inf, -inf with None for JSON serialization
     return [x if isinstance(x, (int, float)) and np.isfinite(x) else None for x in arr]
 
-# Clopper-Pearson (exact binomial) interval
+# Wilson score interval for binomial proportion
 # Returns (lower, upper) bounds as floats in [0,1]
-def clopper_pearson_interval(k, n, alpha=0.05):
+def wilson_interval(k, n, alpha=0.05):
     if n == 0:
         return 0.0, 1.0
-    lower = beta.ppf(alpha / 2, k, n - k + 1) if k > 0 else 0.0
-    upper = beta.ppf(1 - alpha / 2, k + 1, n - k) if k < n else 1.0
+    p = k / n
+    z = norm.ppf(1 - alpha / 2)
+    denominator = 1 + z**2 / n
+    centre = p + z**2 / (2 * n)
+    margin = z * np.sqrt((p * (1 - p) + z**2 / (4 * n)) / n)
+    lower = (centre - margin) / denominator
+    upper = (centre + margin) / denominator
+    # Clamp to [0,1]
+    lower = max(0.0, lower)
+    upper = min(1.0, upper)
     return lower, upper
 
 def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
     """
-    Detect anomalies using Clopper-Pearson interval based on historical CTR.
+    Detect anomalies using Wilson interval based on historical CTR.
     - Aggregates CTR by date using Clicks / Impressions
-    - Rolling historical baseline with Clopper-Pearson CI for anomaly bounds
+    - Rolling historical baseline with Wilson CI for anomaly bounds
     """
     # Validate columns
     required_cols = ['.BannerCTA', 'Date', 'Impressions', 'Clicks']
@@ -44,20 +52,23 @@ def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
     df_daily['Clicks_roll'] = df_daily['Clicks'].shift(1).rolling(window=window).sum()
     df_daily['Impressions_roll'] = df_daily['Impressions'].shift(1).rolling(window=window).sum()
 
-    # Calculate Clopper-Pearson intervals on rolling sums as baseline
-    alpha = 2 * (1 - 0.5 ** (1 / z)) if z > 0 else 0.05  # Approximate z to alpha
-    clopper_bounds = df_daily.apply(
-        lambda row: clopper_pearson_interval(int(row['Clicks_roll']) if not pd.isna(row['Clicks_roll']) else 0,
-                                             int(row['Impressions_roll']) if not pd.isna(row['Impressions_roll']) else 0,
-                                             alpha=alpha)
+    # Calculate Wilson intervals on rolling sums as baseline
+    # Convert z to alpha for two-sided interval: alpha = 2 * (1 - norm.cdf(z))
+    alpha = 2 * (1 - norm.cdf(z)) if z > 0 else 0.05
+    wilson_bounds = df_daily.apply(
+        lambda row: wilson_interval(
+            int(row['Clicks_roll']) if not pd.isna(row['Clicks_roll']) else 0,
+            int(row['Impressions_roll']) if not pd.isna(row['Impressions_roll']) else 0,
+            alpha=alpha
+        )
         if not pd.isna(row['Clicks_roll']) and not pd.isna(row['Impressions_roll']) and row['Impressions_roll'] > 0
         else (np.nan, np.nan),
         axis=1
     )
-    df_daily['Lower'] = clopper_bounds.apply(lambda x: x[0])
-    df_daily['Upper'] = clopper_bounds.apply(lambda x: x[1])
+    df_daily['Lower'] = wilson_bounds.apply(lambda x: x[0])
+    df_daily['Upper'] = wilson_bounds.apply(lambda x: x[1])
 
-    # Detect anomalies comparing current CTR to rolling Clopper-Pearson bounds
+    # Detect anomalies comparing current CTR to rolling Wilson bounds
     df_daily['Anomaly'] = (df_daily['CTR'] > df_daily['Upper']) | (df_daily['CTR'] < df_daily['Lower'])
     df_daily['Anomaly'] = df_daily['Anomaly'] & df_daily['Lower'].notna()
 
@@ -112,6 +123,6 @@ def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
         "anomalies": anomalies_records,
         "plot_data": plot_data,
         "anomaly_points": anomaly_points,
-        "method": f"Clopper-Pearson CI (window={window}, alpha={alpha:.4f})",
+        "method": f"Wilson CI (window={window}, alpha={alpha:.4f})",
         "hover_data": hover_data
     }

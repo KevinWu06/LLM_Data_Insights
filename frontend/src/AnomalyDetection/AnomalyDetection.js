@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, TextField, Button, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
-import { SendAnomalyDetectionAPI } from './services';
+import { SendAnomalyDetectionAPI } from '../services';
 import Plot from 'react-plotly.js'
 
 const bannerOptions = [

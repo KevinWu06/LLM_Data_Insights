@@ -1,5 +1,6 @@
 import React from 'react';
 import bannerImageMap from './embeddedImages';
+import useBannerImageMap from './excel_banner_images';
 import { Box, Typography, Card, CardContent, CardMedia, Grid, Link } from '@mui/material';
 
 const isImageUrl = (url) => {
@@ -16,8 +17,30 @@ const CARD_WIDTH = 300;
 const MEDIA_HEIGHT = 600; 
 
 const BannerVisuals = () => {
+  const { bannerImageMap, needsConsent, requestConsent } = useBannerImageMap();
   const banners = Object.entries(bannerImageMap)
     .filter(([title, url]) => url && url.trim() !== '');
+  const isLoading = !needsConsent && Object.keys(bannerImageMap).length === 0;
+
+  if (needsConsent) {
+    return (
+      <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto', mt: 8, textAlign: 'center' }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          This app needs permission to access the banner visuals mapping file.
+        </Typography>
+        <button onClick={requestConsent} style={{ fontSize: 18, padding: '12px 32px', borderRadius: 8, background: '#1976d2', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+          Grant Access
+        </button>
+      </Box>
+    );
+  }
+  if (isLoading) {
+    return (
+      <Box sx={{ width: '100%', maxWidth: 800, mx: 'auto', mt: 8, textAlign: 'center' }}>
+        <Typography variant="h6">Loading banner visuals...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1800, mx: 'auto', mt: 4 }}>

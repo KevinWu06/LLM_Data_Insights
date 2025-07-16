@@ -1,6 +1,6 @@
 // AskComponent.js
 import React, { useState, useRef, useEffect } from 'react';
-import { SendQueryAPI } from './services.js';
+import { SendQueryAPI } from '../services.js';
 
 function AskComponent({ instance, account, loginRequest, sessionId, systemMessage }) {
   const [question, setQuestion] = useState('');

@@ -8,7 +8,7 @@ import {
   CircularProgress,
   Paper,
 } from '@mui/material';
-import { uploadCSV } from './services';
+import { uploadCSV } from '../services';
 
 const CsvUpload = ({ onUploadSuccess }) => {
   const [file, setFile] = useState(null);

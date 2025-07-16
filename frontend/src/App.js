@@ -4,13 +4,13 @@ import { Box, Container, Typography, Button, Tabs, Tab, MenuItem, Select, FormCo
 import { useMsal, useAccount, useIsAuthenticated } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 
-import CsvUpload from './csv_upload';
-import TableauEmbed from './tableau_embed';
-import ChatWidget from './chat_widget';
-import AskComponent from './ask_component';
+import CsvUpload from './CSVUpload/csv_upload';
+import TableauEmbed from './Dashboard/tableau_embed';
+import ChatWidget from './Chatbot/chat_widget';
+import AskComponent from './Chatbot/ask_component';
 import KnowledgeBaseAssistant from './knowledge_base_assistant';
-import BannerVisuals from './banner_visuals';
-import AnomalyDetection from './AnomalyDetection';
+import BannerVisuals from './BannerVisuals/banner_visuals';
+import AnomalyDetection from './AnomalyDetection/AnomalyDetection';
 
 function App() {
   const { instance, accounts, inProgress } = useMsal();

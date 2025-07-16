@@ -16,7 +16,8 @@
     "react-plotly.js": "^2.6.0",
     "react-router-dom": "^7.6.2",
     "react-scripts": "^5.0.0",
-    "tableau-api": "^2.2.3"
+    "tableau-api": "^2.2.3",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
-import bannerImageMap from './embeddedImages';
+// import bannerImageMap from '../BannerVisuals/embeddedImages';
+import useBannerImageMap from '../BannerVisuals/excel_banner_images'
 
 const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-OutFilter/Dashboard1?:embed=y&:display_count=yes";
 
@@ -11,6 +12,7 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
   const containerRef = useRef(null);
   const vizRef = useRef(null);
   const unregisterRef = useRef(null); // for cleanup
+  const { bannerImageMap, needsConsent, requestConsent } = useBannerImageMap();
 
   // Helper to get all worksheets in the dashboard
   async function getAllWorksheets(viz) {
@@ -128,6 +130,14 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
   console.log("selectedCheckboxes:", selectedCheckboxes);
   console.log("bannerImageMap keys:", Object.keys(bannerImageMap));
   console.log("selectedImages:", selectedImages);
+
+  if (needsConsent) {
+    return (
+      <button onClick={requestConsent}>
+        Grant Access to Banner Visuals
+      </button>
+    );
+  }
 
   return (
     <div
