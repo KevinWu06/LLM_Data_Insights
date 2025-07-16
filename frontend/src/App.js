@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Container, Typography, Button, Tabs, Tab } from '@mui/material';
+import { Box, Container, Typography, Button, Tabs, Tab, MenuItem, Select, FormControl, InputLabel, TextField } from '@mui/material';
 
 import { useMsal, useAccount, useIsAuthenticated } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
@@ -10,6 +10,7 @@ import ChatWidget from './chat_widget';
 import AskComponent from './ask_component';
 import KnowledgeBaseAssistant from './knowledge_base_assistant';
 import BannerVisuals from './banner_visuals';
+import AnomalyDetection from './AnomalyDetection';
 
 function App() {
   const { instance, accounts, inProgress } = useMsal();
@@ -25,6 +26,7 @@ function App() {
   
   // Persist selected checkboxes for Tableau
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
+
 
   const handleLogin = () => {
     instance.loginPopup({loginRequest, prompt: "consent"}).catch(console.error);
@@ -82,15 +84,17 @@ function App() {
           <Tab label="Knowledge Base Assistant" />
           <Tab label="CSV Upload" />
           <Tab label="Banner Visuals" />
+          <Tab label="Anomaly Detection" />
         </Tabs>
-        <Box sx={{ flexGrow: 1, width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <TableauEmbed
-            instance={instance}
-            account={account}
-            selectedCheckboxes={selectedCheckboxes}
-            setSelectedCheckboxes={setSelectedCheckboxes}
-            style={{ display: tab === 0 ? 'block' : 'none' }}
-          />
+        <Box sx={{ flexGrow: 1, width: '100%', display: tab === 0 ? 'flex' : 'block', flexDirection: tab === 0 ? 'row' : 'column', alignItems: tab === 0 ? 'flex-start' : 'stretch' }}>
+          {tab === 0 && (
+            <TableauEmbed
+              instance={instance}
+              account={account}
+              selectedCheckboxes={selectedCheckboxes}
+              setSelectedCheckboxes={setSelectedCheckboxes}
+            />
+          )}
           {tab === 1 && <KnowledgeBaseAssistant instance={instance} account={account} loginRequest={loginRequest} />}
           {tab === 2 && (
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -103,6 +107,10 @@ function App() {
             </Box>
           )}
           {tab === 3 && <BannerVisuals />}
+          {tab === 4 && <AnomalyDetection 
+            sessionId={csvSessionId}
+          />}
+
         </Box>
       </Container>
       {/* ChatWidget is always available in the bottom right, handles its own positioning */}

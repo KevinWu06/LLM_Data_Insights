@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import bannerImageMap from './embeddedImages';
 
-const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-Out/Dashboard1";
+const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-OutFilter/Dashboard1?:embed=y&:display_count=yes";
 
 // NOTE: To get filter values from Tableau, need to use the Tableau JS API.
 // The tableau-viz web component exposes the .viz property, which is a Tableau Viz object
@@ -12,55 +12,62 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
   const vizRef = useRef(null);
   const unregisterRef = useRef(null); // for cleanup
 
-  // Helper to get the first worksheet in the dashboard
-  async function getFirstWorksheet(viz) {
-    if (!viz) return null;
+  // Helper to get all worksheets in the dashboard
+  async function getAllWorksheets(viz) {
+    if (!viz) return [];
     try {
       const workbook = viz.getWorkbook();
       const activeSheet = workbook.getActiveSheet();
-      console.log("[getFirstWorksheet] workbook:", workbook);
-      console.log("[getFirstWorksheet] activeSheet:", activeSheet);
       if (activeSheet.getSheetType && activeSheet.getSheetType() === "dashboard") {
         const worksheets = activeSheet.getWorksheets();
-        console.log("[getFirstWorksheet] worksheets in dashboard:", worksheets);
-        if (worksheets && worksheets.length > 0) {
-          return worksheets[0];
-        }
+        return worksheets || [];
       }
-      return activeSheet;
+      // If not a dashboard, just return the active sheet if it's a worksheet
+      return [activeSheet];
     } catch (err) {
-      console.error("Error getting worksheet:", err);
-      return null;
+      console.error("Error getting worksheets:", err);
+      return [];
     }
   }
 
-  // Helper to get filter values (checkboxes) from the worksheet
+  // Helper to get filter values (checkboxes) from all worksheets
   async function fetchCheckboxFilterValues() {
     const viz = vizRef.current;
-    console.log("[fetchCheckboxFilterValues] vizRef.current:", viz);
-    const worksheet = await getFirstWorksheet(viz);
-    console.log("[fetchCheckboxFilterValues] worksheet:", worksheet);
-    if (!worksheet) return [];
+    const worksheets = await getAllWorksheets(viz);
+    if (!worksheets || worksheets.length === 0) return [];
     try {
-      const filters = await worksheet.getFiltersAsync();
-      console.log("[fetchCheckboxFilterValues] filters:", filters);
-      // Log all filter field names and objects
-      filters.forEach((f, idx) => {
-        const name = f.getFieldName ? f.getFieldName() : f.fieldName;
-        console.log(`[fetchCheckboxFilterValues] Filter[${idx}]:`, name, f);
-      });
-      const checkboxFilter = filters.find(
-        f =>
-          (f.getFieldName && f.getFieldName() === "Banner") ||
-          (f.fieldName && f.fieldName === "Banner")
-      );
-      console.log("[fetchCheckboxFilterValues] checkboxFilter:", checkboxFilter);
-      if (!checkboxFilter) return [];
-      const appliedValues = checkboxFilter.getAppliedValues();
-      console.log("[fetchCheckboxFilterValues] appliedValues:", appliedValues);
-      return appliedValues.map(v => v.formattedValue || v.value);
+      const bannerSet = new Set();
+      for (const worksheet of worksheets) {
+        const summaryData = await worksheet.getSummaryDataAsync();
+        // Debug: log worksheet name and columns
+        if (worksheet.getName) {
+          console.log('[fetchCheckboxFilterValues] Worksheet:', worksheet.getName());
+        }
+        console.log('[fetchCheckboxFilterValues] summaryData:', summaryData);
+        console.log('[fetchCheckboxFilterValues] summaryData.$0.$0 (columns):', summaryData?.$0?.$0);
+        console.log('[fetchCheckboxFilterValues] summaryData.$0.$3 (data):', summaryData?.$0?.$3);
+        const columns = summaryData?.$0?.$0;
+        const dataRows = summaryData?.$0?.$3;
+        console.log('[fetchCheckboxFilterValues] columns:', columns);
+        columns.forEach((col, idx) => {
+          console.log(`[fetchCheckboxFilterValues] columns[${idx}]:`, col);
+          if (col && typeof col.getFieldName === 'function') {
+            console.log(`[fetchCheckboxFilterValues] columns[${idx}].getFieldName():`, col.getFieldName());
+          }
+        });
+        if (Array.isArray(columns) && Array.isArray(dataRows)) {
+          const bannerColIdx = columns.findIndex(col => col?.getFieldName && col.getFieldName() === 'Banner');
+          if (bannerColIdx !== -1) {
+            for (const row of dataRows) {
+              const bannerValue = row[bannerColIdx]?.formattedValue;
+              if (bannerValue) bannerSet.add(bannerValue);
+            }
+          }
+        }
+      }
+      return Array.from(bannerSet);
     } catch (err) {
-      console.error("Error fetching filter values:", err);
+      console.error("Error fetching visible banners from summary data:", err);
       return [];
     }
   }
@@ -109,7 +116,13 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
   // Show all non-empty URLs for selected banners
   const selectedImages = selectedCheckboxes
     .map(title => [title, bannerImageMap[title]])
-    .filter(([title, url]) => url && url.trim() !== '');
+    .reverse();
+
+  // Sidebar image sizing logic
+  const sidebarMaxHeight = 330;
+  const minThumb = 30;
+  const nSidebar = selectedImages.length || 1;
+  const thumbSidebar = Math.max(minThumb, Math.floor(sidebarMaxHeight / nSidebar));
 
   // Debug logging
   console.log("selectedCheckboxes:", selectedCheckboxes);
@@ -120,70 +133,91 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
     <div
       style={{
         width: '100%',
-        maxWidth: 1440,
+        maxWidth: 1800,
         margin: '8px auto 32px auto',
         background: '#f8fafc',
         borderRadius: 18,
         boxShadow: '0 4px 24px rgba(25, 118, 210, 0.10)',
-        minHeight: 800,
-        flexDirection: 'column',
-        alignItems: 'center',
+        minHeight: 900,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
         ...style,
       }}
     >
-      <h2
-        style={{
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          fontWeight: 700,
-          fontSize: 32,
-          color: '#1a237e',
-          marginBottom: 32,
-          letterSpacing: 0.2,
-          textAlign: 'center',
-        }}
-      >
-        Banner Performance Dashboard
-      </h2>
-      <div
-        ref={containerRef}
-        style={{
-          width: '100%',
-          minHeight: 0,
-          height: '800px',
-          maxWidth: 1400,
-          border: '1.5px solid #dbeafe',
-          borderRadius: 12,
-          boxShadow: '0 2px 12px rgba(25,118,210,0.08)',
-          background: '#fff',
-          margin: '0 auto',
-        }}
-      />
-      {selectedImages.length > 0 && (
-        <div style={{ margin: '40px auto 0 auto', maxWidth: 1200, textAlign: 'center' }}>
-          <h3 style={{ color: '#1976d2', fontWeight: 700, marginBottom: 24 }}>Selected Banner Visuals</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'center' }}>
-            {selectedImages.map(([title, url]) => (
-              <div key={title} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 320 }}>
+      {/* Sidebar: Selected Banner Visuals */}
+      <div style={{
+        minWidth: 130,
+        maxWidth: 130,
+        width: 130,
+        flex: '0 0 130px',
+        padding: '0 8px 0 8px',
+        background: '#f8fafc',
+        borderRight: '1.5px solid #dbeafe',
+        height: 900,
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+      }}>
+        <h3 style={{ color: '#1976d2', fontWeight: 700, margin: 0, marginBottom: 0, textAlign: 'center', fontSize: 12, height: 32, lineHeight: '32px' }}>Selected Banner Visuals</h3>
+        <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: selectedImages.length === 0 ? 'flex-start' : 'flex-none', marginTop: 300 }}>
+          {selectedImages.length > 0 ? (
+            selectedImages.map(([title, url]) => (
+              <div key={title} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                 {isImageUrl(url) ? (
-                  <img src={url} alt={title} style={{ maxWidth: 300, maxHeight: 600, borderRadius: 8, boxShadow: '0 2px 8px rgba(25,118,210,0.10)', background: '#f8fafc', marginBottom: 12 }} />
+                  <img src={url} alt={title} style={{ width: thumbSidebar, height: thumbSidebar, borderRadius: 3, boxShadow: '0 2px 8px rgba(25,118,210,0.10)', background: '#f8fafc', objectFit: 'contain', display: 'block' }} />
                 ) : isHtmlBanner(url) ? (
-                  <iframe
-                    src={url}
-                    title={title}
-                    style={{ width: 300, height: 600, border: 'none', borderRadius: 8, background: '#f8fafc', marginBottom: 12 }}
-                    sandbox="allow-scripts allow-same-origin"
-                  />
+                  <div style={{ width: thumbSidebar, height: thumbSidebar, overflow: 'hidden', borderRadius: 3, background: '#f8fafc', display: 'block', boxShadow: '0 2px 8px rgba(25,118,210,0.10)' }}>
+                    <iframe
+                      src={url}
+                      title={title}
+                      width={300}
+                      height={600}
+                      style={{
+                        border: 'none',
+                        transform: `scale(${thumbSidebar / 300}, ${thumbSidebar / 600})`,
+                        transformOrigin: 'top left',
+                        width: 300,
+                        height: 600,
+                        background: '#f8fafc',
+                        display: 'block',
+                      }}
+                      sandbox="allow-scripts allow-same-origin"
+                    />
+                  </div>
                 ) : (
-                  <a href={url} target="_blank" rel="noopener noreferrer" style={{ marginBottom: 12, color: '#1976d2' }}>
-                    {url}
-                  </a>
+                  <div style={{ width: thumbSidebar, height: thumbSidebar, borderRadius: 3, background: '#f8fafc', boxShadow: '0 2px 8px rgba(25,118,210,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: 8, textAlign: 'center', padding: 2 }}>
+                    banner visual unavailable
+                  </div>
                 )}
-                <div style={{ fontWeight: 600, color: '#222', fontSize: 18 }}>{title}</div>
+                <div style={{ fontWeight: 600, color: '#222', fontSize: 9, textAlign: 'center', wordBreak: 'break-word', maxWidth: 100 }}>{title}</div>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            <div style={{ color: '#888', textAlign: 'center', marginTop: 32, fontSize: 10, width: '100%' }}>No banner visuals selected.</div>
+          )}
         </div>
-      )}
+      </div>
+      {/* Main Content: Tableau Dashboard */}
+      <div style={{ flex: 1, padding: '16px 16px 16px 12px', minWidth: 600, display: 'flex', flexDirection: 'column', alignItems: 'stretch', height: 900 }}>
+        <div
+          ref={containerRef}
+          style={{
+            width: '100%',
+            minHeight: 0,
+            height: '100%',
+            maxWidth: 1400,
+            border: '1.5px solid #dbeafe',
+            borderRadius: 12,
+            boxShadow: '0 2px 12px rgba(25,118,210,0.08)',
+            background: '#fff',
+            margin: 0,
+          }}
+        />
+      </div>
     </div>
   );
 }

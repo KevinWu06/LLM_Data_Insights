@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from google import generativeai as genai
+from anomoly_detection import detect_binomial_ci_anomalies
 
 import os
 import uvicorn
@@ -26,6 +27,12 @@ class KbAskRequest(BaseModel):
     accessToken: str
 class AskResponse(BaseModel):
     answer: str
+
+class AnomalyDetectionRequest(BaseModel):
+    banner: str
+    numDays: int
+    stdDev: int
+    session_id: str
 
 app = FastAPI()
 
@@ -48,7 +55,10 @@ def getAnswerableQuestions(questions: str, session_id: str):
     if not questions:
         return ""
     # This is a pandas dataframe
-    currentTable = csv_data[session_id]
+    try:
+        currentTable = csv_data[session_id]
+    except(KeyError):
+        return "Error"
     tableSnippet = currentTable.head(100)
     snippet_str = tableSnippet.to_string(index = False)
     query = f"""You are given a snippet of a dataset. Your task is to identify which of the following questions can reasonably be answered using the information in the dataset snippet.
@@ -246,6 +256,9 @@ def call_llm(request: AskRequest) -> str:
     print(questions)
     if (questions != ""):
         answerableQuestions = getAnswerableQuestions(questions, request.session_id)
+        if (answerableQuestions == "Error"):
+            response = "Please upload a CSV."
+            return response
         print("\n Answerable questions")
         print(answerableQuestions)
 
@@ -289,7 +302,17 @@ def call_llm(request: AskRequest) -> str:
                 print("\n Relevent columns")
                 print(releventColumns)
 
-                releventColumns = ast.literal_eval(releventColumns)
+                # releventColumns = ast.literal_eval(releventColumns)
+                if isinstance(releventColumns, str):
+                    releventColumns = releventColumns.strip()
+                    if releventColumns.startswith("```"):
+                        # Remove Markdown-style code block
+                        releventColumns = '\n'.join(
+                            line for line in releventColumns.splitlines()
+                            if not line.strip().startswith("```")
+                        )
+                    releventColumns = ast.literal_eval(releventColumns)
+
                 df = csv_data[request.session_id]
                 df.columns = [col.lstrip('.') for col in df.columns]
                 filtered_df = df[releventColumns]
@@ -407,6 +430,24 @@ async def ask(request: AskRequest):
     answer = call_llm(request)
     return AskResponse(answer=answer)
 
+@app.post("/anomaly_detection")
+async def anomalyDetection(request: AnomalyDetectionRequest):
+    print(f"Received request for {request.banner} for standard deviation of {request.stdDev}")
+    current_table = csv_data[request.session_id]
+    result = detect_binomial_ci_anomalies(
+        current_table,
+        banner_name=request.banner,
+        window=request.numDays,
+        z=request.stdDev,
+    )
+    return JSONResponse({
+        "answer": "",
+        "plot_data": result["plot_data"],
+        "anomalies": result["anomalies"],
+        "anomaly_points": result["anomaly_points"],
+        "hover_data": result["hover_data"],
+        "method": result["method"]
+    })
 
 @app.post("/kb_ask", response_model=AskResponse)
 async def kb_ask(request: KbAskRequest):

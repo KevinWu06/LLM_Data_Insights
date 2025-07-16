@@ -12,6 +12,13 @@ export const SendQueryAPI = async (query, session_id) => {
   });
 };
 
+export const SendAnomalyDetectionAPI = async (banner, window, stdDev, session_id) => {
+  const url = API_GATEWAY + '/anomaly_detection';
+  return axios.post(url, { banner: banner, numDays: window, stdDev: stdDev, session_id }, {
+    withCredentials: true,
+  });
+};
+
 export const sendKBQueryAPI = async (query, access_token) => {
   const url = API_GATEWAY + '/kb_ask';
   return axios.post(url, { question: query, accessToken: access_token }, {

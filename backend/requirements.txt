@@ -5,3 +5,5 @@ mysql-connector-python
 google-generativeai
 pandas
 python-multipart
+plotly
+matplotlib
