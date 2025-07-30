@@ -58,6 +58,15 @@ export default function AnomalyDetection( {sessionId} ) {
     }
   };
 
+  // Add a helper function for 2 significant digits
+  function formatPctSig2(val) {
+    if (val === null || val === undefined || isNaN(val)) return 'N/A';
+    const pct = val * 100;
+    let str = Number(pct).toPrecision(2);
+    if (str.endsWith('.0')) str = str.slice(0, -2);
+    return str + '%';
+  }
+
   return (
     <Box sx={{ width: 1200, mx: 'auto', mt: 4, p: 4, background: '#f8fafc', borderRadius: 3, boxShadow: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: '#1976d2' }}>Anomaly Detection</Typography>
@@ -117,7 +126,7 @@ export default function AnomalyDetection( {sessionId} ) {
                   .map((v, i) =>
                     !anomalyMask[i]
                       ? {
-                          pct: v !== null && v !== undefined ? `${(v * 100).toFixed(2)}%` : 'N/A',
+                          pct: formatPctSig2(v),
                           Clicks: response.plot_data.clicks[i],
                           Impressions: response.plot_data.impressions[i]
                         }
@@ -132,7 +141,7 @@ export default function AnomalyDetection( {sessionId} ) {
                   .map((v, i) =>
                     anomalyMask[i]
                       ? {
-                          pct: v !== null && v !== undefined ? `${(v * 100).toFixed(2)}%` : 'N/A',
+                          pct: formatPctSig2(v),
                           Clicks: response.plot_data.clicks[i],
                           Impressions: response.plot_data.impressions[i]
                         }
@@ -226,7 +235,7 @@ export default function AnomalyDetection( {sessionId} ) {
                     {response.anomalies.map((row, idx) => (
                       <TableRow key={idx}>
                         <TableCell>{row.Date}</TableCell>
-                        <TableCell align="right">{row['CTR']}</TableCell>
+                        <TableCell align="right">{formatPctSig2(row['CTR'])}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

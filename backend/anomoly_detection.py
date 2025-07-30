@@ -1,37 +1,18 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import io
-import base64
 import numpy as np
-from scipy.stats import norm
 
 def clean_floats(arr):
     # Replace NaN, inf, -inf with None for JSON serialization
     return [x if isinstance(x, (int, float)) and np.isfinite(x) else None for x in arr]
 
-# Wilson score interval for binomial proportion
-# Returns (lower, upper) bounds as floats in [0,1]
-def wilson_interval(k, n, alpha=0.05):
-    if n == 0:
-        return 0.0, 1.0
-    p = k / n
-    z = norm.ppf(1 - alpha / 2)
-    denominator = 1 + z**2 / n
-    centre = p + z**2 / (2 * n)
-    margin = z * np.sqrt((p * (1 - p) + z**2 / (4 * n)) / n)
-    lower = (centre - margin) / denominator
-    upper = (centre + margin) / denominator
-    # Clamp to [0,1]
-    lower = max(0.0, lower)
-    upper = min(1.0, upper)
-    return lower, upper
-
-def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
+def detect_moving_average_anomalies(df, banner_name, z=None, window=10):
     """
-    Detect anomalies using Wilson interval based on historical CTR.
+    Detect anomalies using moving average of CTR with +/-10% bounds.
     - Aggregates CTR by date using Clicks / Impressions
-    - Rolling historical baseline with Wilson CI for anomaly bounds
+    - Rolling historical baseline with moving average for anomaly bounds
+    - Anomaly if CTR is >10% above or below moving average of previous window days
+    - Moving average is defined as sum(clicks) / sum(impressions) over the past X days (excluding current day)
+    Only include data points with more than 100 impressions.
     """
     # Validate columns
     required_cols = ['.BannerCTA', 'Date', 'Impressions', 'Clicks']
@@ -48,34 +29,27 @@ def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
     df_daily = df_banner.groupby('Date', as_index=False).agg({'Clicks': 'sum', 'Impressions': 'sum'})
     df_daily['CTR'] = df_daily['Clicks'] / df_daily['Impressions']
 
-    # Compute rolling sums of clicks and impressions, shifted by 1 to exclude current day
-    df_daily['Clicks_roll'] = df_daily['Clicks'].shift(1).rolling(window=window).sum()
-    df_daily['Impressions_roll'] = df_daily['Impressions'].shift(1).rolling(window=window).sum()
+    # Only keep data points with more than 5000 impressions
+    df_daily = df_daily[df_daily['Impressions'] > 5000].reset_index(drop=True)
 
-    # Calculate Wilson intervals on rolling sums as baseline
-    # Convert z to alpha for two-sided interval: alpha = 2 * (1 - norm.cdf(z))
-    alpha = 2 * (1 - norm.cdf(z)) if z > 0 else 0.05
-    wilson_bounds = df_daily.apply(
-        lambda row: wilson_interval(
-            int(row['Clicks_roll']) if not pd.isna(row['Clicks_roll']) else 0,
-            int(row['Impressions_roll']) if not pd.isna(row['Impressions_roll']) else 0,
-            alpha=alpha
-        )
-        if not pd.isna(row['Clicks_roll']) and not pd.isna(row['Impressions_roll']) and row['Impressions_roll'] > 0
-        else (np.nan, np.nan),
-        axis=1
-    )
-    df_daily['Lower'] = wilson_bounds.apply(lambda x: x[0])
-    df_daily['Upper'] = wilson_bounds.apply(lambda x: x[1])
+    # Compute rolling sum of Clicks and Impressions, shifted by 1 to exclude current day
+    clicks_rolling = df_daily['Clicks'].shift(1).rolling(window=window).sum()
+    impressions_rolling = df_daily['Impressions'].shift(1).rolling(window=window).sum()
+    # Compute moving average CTR as sum(clicks) / sum(impressions) over window
+    df_daily['CTR_MA'] = clicks_rolling / impressions_rolling
 
-    # Detect anomalies comparing current CTR to rolling Wilson bounds
-    df_daily['Anomaly'] = (df_daily['CTR'] > df_daily['Upper']) | (df_daily['CTR'] < df_daily['Lower'])
-    df_daily['Anomaly'] = df_daily['Anomaly'] & df_daily['Lower'].notna()
+    # Calculate upper and lower bounds (+/-10% of moving average)
+    df_daily['Upper'] = df_daily['CTR_MA'] * 1.3
+    df_daily['Lower'] = df_daily['CTR_MA'] * 0.7
+
+    # Detect anomalies: outside of +/-10% of moving average, only if moving average is not NaN
+    df_daily['Anomaly'] = (
+        (df_daily['CTR'] > df_daily['Upper']) | (df_daily['CTR'] < df_daily['Lower'])
+    ) & df_daily['CTR_MA'].notna()
 
     # Require at least 2 consecutive anomalies
     anomaly_mask = df_daily['Anomaly'] & (df_daily['Anomaly'].shift(1) | df_daily['Anomaly'].shift(-1))
     df_daily['Anomaly'] = anomaly_mask
-    print(df_daily[['Date', 'Clicks_roll', 'Impressions_roll', 'Lower', 'Upper']])
 
     # Prepare arrays for frontend plotting
     plot_data = {
@@ -123,6 +97,6 @@ def detect_binomial_ci_anomalies(df, banner_name, z=2, window=10):
         "anomalies": anomalies_records,
         "plot_data": plot_data,
         "anomaly_points": anomaly_points,
-        "method": f"Wilson CI (window={window}, alpha={alpha:.4f})",
+        "method": f"Moving Average (window={window}, bounds=±10%)",
         "hover_data": hover_data
     }

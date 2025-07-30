@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from google import generativeai as genai
-from anomoly_detection import detect_binomial_ci_anomalies
+from anomoly_detection import detect_moving_average_anomalies
 
 import os
 import uvicorn
@@ -434,7 +434,7 @@ async def ask(request: AskRequest):
 async def anomalyDetection(request: AnomalyDetectionRequest):
     print(f"Received request for {request.banner} for standard deviation of {request.stdDev}")
     current_table = csv_data[request.session_id]
-    result = detect_binomial_ci_anomalies(
+    result = detect_moving_average_anomalies(
         current_table,
         banner_name=request.banner,
         window=request.numDays,
