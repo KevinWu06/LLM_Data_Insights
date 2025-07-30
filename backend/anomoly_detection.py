@@ -5,14 +5,36 @@ def clean_floats(arr):
     # Replace NaN, inf, -inf with None for JSON serialization
     return [x if isinstance(x, (int, float)) and np.isfinite(x) else None for x in arr]
 
-def detect_moving_average_anomalies(df, banner_name, z=None, window=10):
+def detect_moving_average_anomalies(df, banner_name, over_under=0.3, window=10):
     """
-    Detect anomalies using moving average of CTR with +/-10% bounds.
-    - Aggregates CTR by date using Clicks / Impressions
-    - Rolling historical baseline with moving average for anomaly bounds
-    - Anomaly if CTR is >10% above or below moving average of previous window days
-    - Moving average is defined as sum(clicks) / sum(impressions) over the past X days (excluding current day)
-    Only include data points with more than 100 impressions.
+    Detects anomalies in CTR (click-through rate) for a given banner using a moving average model.
+
+    The function:
+    - Filters data by the specified banner name.
+    - Aggregates clicks and impressions by date.
+    - Computes CTR = Clicks / Impressions.
+    - Calculates a moving average CTR based on a rolling window (excluding the current day).
+    - Flags anomalies where the actual CTR is outside ±`over_under`% bounds of the moving average.
+    - Only considers dates with more than 5000 impressions.
+    - Requires anomalies to occur in at least two consecutive days to be marked.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing columns '.BannerCTA', 'Date', 'Clicks', and 'Impressions'.
+        banner_name (str): Banner name to isolate for analysis (from the '.BannerCTA' column).
+        over_under (float, optional): Threshold for deviation from the moving average (e.g., 0.3 = ±30%). Defaults to 0.3.
+        window (int, optional): Number of historical days used to calculate the moving average. Defaults to 10.
+
+    Returns:
+        dict: {
+            'anomalies': List of anomaly records as dictionaries,
+            'plot_data': Dict with arrays for dates, CTR, bounds, clicks, impressions, and anomaly flags,
+            'anomaly_points': List of simplified anomaly points for scatter plot overlays,
+            'hover_data': List of dictionaries with CTR and metadata per point,
+            'method': Description string of the detection method.
+        }
+
+    Raises:
+        ValueError: If required columns are missing from the input DataFrame.
     """
     # Validate columns
     required_cols = ['.BannerCTA', 'Date', 'Impressions', 'Clicks']
@@ -38,16 +60,17 @@ def detect_moving_average_anomalies(df, banner_name, z=None, window=10):
     # Compute moving average CTR as sum(clicks) / sum(impressions) over window
     df_daily['CTR_MA'] = clicks_rolling / impressions_rolling
 
-    # Calculate upper and lower bounds (+/-10% of moving average)
-    df_daily['Upper'] = df_daily['CTR_MA'] * 1.3
-    df_daily['Lower'] = df_daily['CTR_MA'] * 0.7
+    # Calculate upper and lower bounds (+/- over_under% of moving average)
+    df_daily['Upper'] = df_daily['CTR_MA'] * (1 + over_under)
+    df_daily['Lower'] = df_daily['CTR_MA'] * (1 - over_under)
 
-    # Detect anomalies: outside of +/-10% of moving average, only if moving average is not NaN
+    # Detect anomalies: outside of +/- over_under% of moving average, only if moving average is not NaN
     df_daily['Anomaly'] = (
         (df_daily['CTR'] > df_daily['Upper']) | (df_daily['CTR'] < df_daily['Lower'])
     ) & df_daily['CTR_MA'].notna()
 
     # Require at least 2 consecutive anomalies
+    # To disable, comment the next two lines out
     anomaly_mask = df_daily['Anomaly'] & (df_daily['Anomaly'].shift(1) | df_daily['Anomaly'].shift(-1))
     df_daily['Anomaly'] = anomaly_mask
 
@@ -97,6 +120,6 @@ def detect_moving_average_anomalies(df, banner_name, z=None, window=10):
         "anomalies": anomalies_records,
         "plot_data": plot_data,
         "anomaly_points": anomaly_points,
-        "method": f"Moving Average (window={window}, bounds=±10%)",
+        "method": f"Moving Average (window={window} days, bounds=±{over_under * 100}%)",
         "hover_data": hover_data
     }

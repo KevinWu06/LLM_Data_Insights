@@ -12,9 +12,9 @@ export const SendQueryAPI = async (query, session_id) => {
   });
 };
 
-export const SendAnomalyDetectionAPI = async (banner, window, stdDev, session_id) => {
+export const SendAnomalyDetectionAPI = async (banner, window, overUnder, session_id) => {
   const url = API_GATEWAY + '/anomaly_detection';
-  return axios.post(url, { banner: banner, numDays: window, stdDev: stdDev, session_id }, {
+  return axios.post(url, { banner: banner, numDays: window, over_under: overUnder, session_id }, {
     withCredentials: true,
   });
 };

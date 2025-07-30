@@ -1,3 +1,5 @@
+// Banner Links map local version
+
 const bannerImageMap = {
     "Improved PFS":                 "https://banners.culthealth.com/SERVIER/TIBSOVO/SVR-CCA-TIB-001475-1/300x600/", //verified
     "Disease Control Rate":         "https://banners.culthealth.com/SERVIER/TIBSOVO/SVR-CCA-TIB-001475-2/160x600/", //verified

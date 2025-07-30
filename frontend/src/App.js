@@ -18,13 +18,10 @@ function App() {
   const account = useAccount(accounts[0] || {});
   const [tab, setTab] = useState(0);
 
-  // For CSV upload state
   const [csvSessionId, setCsvSessionId] = useState(null);
   const [csvColumns, setCsvColumns] = useState([]);
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [csvFileName, setCsvFileName] = useState("");
-  
-  // Persist selected checkboxes for Tableau
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
 
 
@@ -36,7 +33,6 @@ function App() {
     instance.logoutPopup().catch(console.error);
   };
 
-  // Callback for CsvUpload
   const handleCsvUploadSuccess = (data) => {
     setCsvSessionId(data.session_id);
     setCsvColumns(data.columns);
@@ -81,7 +77,6 @@ function App() {
         </Box>
         <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 4 }}>
           <Tab label="Dashboard" />
-          <Tab label="Knowledge Base Assistant" />
           <Tab label="CSV Upload" />
           <Tab label="Banner Visuals" />
           <Tab label="Anomaly Detection" />
@@ -95,8 +90,7 @@ function App() {
               setSelectedCheckboxes={setSelectedCheckboxes}
             />
           )}
-          {tab === 1 && <KnowledgeBaseAssistant instance={instance} account={account} loginRequest={loginRequest} />}
-          {tab === 2 && (
+          {tab === 1 && (
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <CsvUpload onUploadSuccess={handleCsvUploadSuccess} />
               {csvUploaded && (
@@ -106,8 +100,8 @@ function App() {
               )}
             </Box>
           )}
-          {tab === 3 && <BannerVisuals />}
-          {tab === 4 && <AnomalyDetection 
+          {tab === 2 && <BannerVisuals />}
+          {tab === 3 && <AnomalyDetection 
             sessionId={csvSessionId}
           />}
 

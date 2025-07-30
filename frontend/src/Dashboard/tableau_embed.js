@@ -1,10 +1,10 @@
 import React, { useRef, useEffect } from "react";
-// import bannerImageMap from '../BannerVisuals/embeddedImages';
 import useBannerImageMap from '../BannerVisuals/excel_banner_images'
 
+// Can Change to suit needs
 const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-OutFilter/Dashboard1?:embed=y&:display_count=yes";
 
-// NOTE: To get filter values from Tableau, need to use the Tableau JS API.
+// IMPORTANT NOTE: To get filter values from Tableau, need to use the Tableau JS API.
 // The tableau-viz web component exposes the .viz property, which is a Tableau Viz object
 // Use that to get the filters and their values
 
@@ -41,22 +41,9 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
       const bannerSet = new Set();
       for (const worksheet of worksheets) {
         const summaryData = await worksheet.getSummaryDataAsync();
-        // Debug: log worksheet name and columns
-        if (worksheet.getName) {
-          console.log('[fetchCheckboxFilterValues] Worksheet:', worksheet.getName());
-        }
-        console.log('[fetchCheckboxFilterValues] summaryData:', summaryData);
-        console.log('[fetchCheckboxFilterValues] summaryData.$0.$0 (columns):', summaryData?.$0?.$0);
-        console.log('[fetchCheckboxFilterValues] summaryData.$0.$3 (data):', summaryData?.$0?.$3);
         const columns = summaryData?.$0?.$0;
         const dataRows = summaryData?.$0?.$3;
         console.log('[fetchCheckboxFilterValues] columns:', columns);
-        columns.forEach((col, idx) => {
-          console.log(`[fetchCheckboxFilterValues] columns[${idx}]:`, col);
-          if (col && typeof col.getFieldName === 'function') {
-            console.log(`[fetchCheckboxFilterValues] columns[${idx}].getFieldName():`, col.getFieldName());
-          }
-        });
         if (Array.isArray(columns) && Array.isArray(dataRows)) {
           const bannerColIdx = columns.findIndex(col => col?.getFieldName && col.getFieldName() === 'Banner');
           if (bannerColIdx !== -1) {
@@ -103,7 +90,6 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
       if (unregisterRef.current) unregisterRef.current();
       // Do NOT dispose vizRef.current, so Tableau viz persists across tab switches
     };
-    // eslint-disable-next-line
   }, [setSelectedCheckboxes]);
 
   // Helper to check if a URL is a direct image

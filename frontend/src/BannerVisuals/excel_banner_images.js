@@ -11,8 +11,7 @@ function useBannerImageMap() {
   const [driveId, setDriveId] = useState(null);
   const POLL_INTERVAL = 60000; // 60 seconds
 
-  // SharePoint site and file details
-  const siteUrl = "indegene123.sharepoint.com:/sites/CopilotAPIWebApp";
+  // SharePoint file details
   const itemPath = "/Banner Visuals.xlsx";
 
   useEffect(() => {

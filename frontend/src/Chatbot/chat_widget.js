@@ -1,11 +1,10 @@
-// chat_widget.js
 import React, { useState, useEffect } from 'react';
 import { Box, IconButton, Typography, Paper, Fade, Divider, Tooltip, Avatar } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
 import AskComponent from './ask_component';
 
-const ChatWidget = ({ instance, account, loginRequest, sessionId, csvFileName }) => {
+const ChatWidget = ({ sessionId, csvFileName }) => {
   const [open, setOpen] = useState(false);
   const [systemMessage, setSystemMessage] = useState("");
 
@@ -155,7 +154,7 @@ const ChatWidget = ({ instance, account, loginRequest, sessionId, csvFileName })
               borderBottomRightRadius: 20,
             }}
           >
-            <AskComponent instance={instance} account={account} loginRequest={loginRequest} sessionId={sessionId} systemMessage={systemMessage} />
+            <AskComponent sessionId={sessionId} systemMessage={systemMessage} />
           </Box>
         </Paper>
       </Fade>

@@ -13,7 +13,7 @@ export const msalConfig = {
 };
 
 export const loginRequest = {
-  scopes: ['User.Read', 'Sites.Read.All', 'Files.Read.All'], // scopes you need for registered app for retrieval API 
+  scopes: ['User.Read', 'Sites.Read.All', 'Files.Read.All'], // scopes necessary for registered app for retrieval API 
 };
 
 export async function getAccessToken(instance, account) {

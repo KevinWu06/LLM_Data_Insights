@@ -38,7 +38,7 @@ const bannerOptions = [
 
 export default function AnomalyDetection( {sessionId} ) {
   const [anomalyBanner, setAnomalyBanner] = useState('Go Deeper');
-  const [anomalyStdDev, setAnomalyStdDev] = useState(2);
+  const [anomalyOverUnder, setAnomalyOverUnder] = useState(0.3);
   const [anomalyWindow, setAnomalyWindow] = useState(7);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
@@ -49,16 +49,16 @@ export default function AnomalyDetection( {sessionId} ) {
     setError(null);
     setResponse(null);
     try {
-      const res = await SendAnomalyDetectionAPI(anomalyBanner, anomalyWindow, anomalyStdDev, sessionId);
-      setResponse(res.data); // <-- axios puts the response body here
+      const res = await SendAnomalyDetectionAPI(anomalyBanner, anomalyWindow, anomalyOverUnder, sessionId);
+      setResponse(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'An error occurred');
+      setError(err.response?.data?.error || err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  // Add a helper function for 2 significant digits
+  // Helper function for 2 significant digits
   function formatPctSig2(val) {
     if (val === null || val === undefined || isNaN(val)) return 'N/A';
     const pct = val * 100;
@@ -84,13 +84,12 @@ export default function AnomalyDetection( {sessionId} ) {
         </Select>
       </FormControl>
       <TextField
-        label="Number of Standard Deviations"
+        label="Over/Under Boundary Decimal (eg. enter 0.3 for 30%)"
         type="number"
-        value={anomalyStdDev}
-        onChange={e => setAnomalyStdDev(Number(e.target.value))}
+        value={anomalyOverUnder}
+        onChange={e => setAnomalyOverUnder(Number(e.target.value))}
         fullWidth
         sx={{ mb: 2 }}
-        inputProps={{ min: 1, step: 1 }}
       />
       <TextField
         label="Window Size (Days)"
@@ -206,7 +205,16 @@ export default function AnomalyDetection( {sessionId} ) {
                       }
                     ]}
                     layout={{
-                      title: 'CTR Anomaly Detection',
+                      title: {
+                        text: response.method || 'CTR Anomaly Detection',
+                        font: { size: 24, family: 'Roboto, Arial, sans-serif', color: '#222' },
+                        xref: 'paper',
+                        x: 0.5,
+                        xanchor: 'center',
+                        yanchor: 'top',
+                        y: 0.95,
+                        pad: { t: 10, b: 10 }
+                      },
                       xaxis: { title: 'Date' },
                       yaxis: { title: 'CTR (%)', tickformat: ',.2%', automargin: true },
                       hovermode: 'closest',
