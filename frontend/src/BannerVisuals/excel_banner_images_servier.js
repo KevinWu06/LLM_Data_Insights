@@ -2,7 +2,7 @@ import { useMsal } from "@azure/msal-react";
 import * as XLSX from "xlsx";
 import { useEffect, useState } from "react";
 
-function useBannerImageMap() {
+function useBannerImageMapServier() {
   const { instance, accounts } = useMsal();
   const [bannerImageMap, setBannerImageMap] = useState({});
   const [needsConsent, setNeedsConsent] = useState(false);
@@ -12,7 +12,7 @@ function useBannerImageMap() {
   const POLL_INTERVAL = 60000; // 60 seconds
 
   // SharePoint file details
-  const itemPath = "/Banner Visuals.xlsx";
+  const itemPath = "/Banner Visuals Servier.xlsx";
 
   useEffect(() => {
     let poller;
@@ -199,4 +199,4 @@ async function listDriveRoot(accessToken, driveId) {
   );
 }
 
-export default useBannerImageMap;
+export default useBannerImageMapServier;

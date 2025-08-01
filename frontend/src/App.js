@@ -5,11 +5,11 @@ import { useMsal, useAccount, useIsAuthenticated } from '@azure/msal-react';
 import { loginRequest } from './authConfig';
 
 import CsvUpload from './CSVUpload/csv_upload';
-import TableauEmbed from './Dashboard/tableau_embed';
+import TableauEmbedServier from './Dashboard/tableau_embed_Servier';
+import TableauEmbedAUV from './Dashboard/tableau_embed_AUV';
 import ChatWidget from './Chatbot/chat_widget';
-import AskComponent from './Chatbot/ask_component';
-import KnowledgeBaseAssistant from './knowledge_base_assistant';
 import BannerVisuals from './BannerVisuals/banner_visuals';
+const { ServierBannerVisuals, AUVBannerVisuals } = BannerVisuals;
 import AnomalyDetection from './AnomalyDetection/AnomalyDetection';
 
 function App() {
@@ -23,6 +23,8 @@ function App() {
   const [csvUploaded, setCsvUploaded] = useState(false);
   const [csvFileName, setCsvFileName] = useState("");
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
+  const [bannerSubTab, setBannerSubTab] = useState(0);
+  const [dashboardSubTab, setDashboardSubTab] = useState(0);
 
 
   const handleLogin = () => {
@@ -76,31 +78,69 @@ function App() {
           </Button>
         </Box>
         <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 4 }}>
-          <Tab label="Dashboard" />
+          <Tab label="Dashboards" />
           <Tab label="CSV Upload" />
           <Tab label="Banner Visuals" />
           <Tab label="Anomaly Detection" />
         </Tabs>
         <Box sx={{ flexGrow: 1, width: '100%', display: tab === 0 ? 'flex' : 'block', flexDirection: tab === 0 ? 'row' : 'column', alignItems: tab === 0 ? 'flex-start' : 'stretch' }}>
-          {tab === 0 && (
-            <TableauEmbed
-              instance={instance}
-              account={account}
-              selectedCheckboxes={selectedCheckboxes}
-              setSelectedCheckboxes={setSelectedCheckboxes}
-            />
-          )}
+        {tab === 0 && (
+          <Box sx={{ width: '100%' }}>
+            <Tabs
+              value={dashboardSubTab}
+              onChange={(e, v) => setDashboardSubTab(v)}
+              centered
+              sx={{ mb: 2 }}
+            >
+              <Tab label="Servier Dashboard" />
+              <Tab label="AUV Dashboard" />
+            </Tabs>
+
+            {dashboardSubTab === 0 && (
+              <TableauEmbedServier
+                instance={instance}
+                account={account}
+                selectedCheckboxes={selectedCheckboxes}
+                setSelectedCheckboxes={setSelectedCheckboxes}
+              />
+            )}
+            {dashboardSubTab === 1 && (
+              <TableauEmbedAUV
+                instance={instance}
+                account={account}
+                selectedCheckboxes={selectedCheckboxes}
+                setSelectedCheckboxes={setSelectedCheckboxes}
+              />
+            )}
+          </Box>
+        )}
+
           {tab === 1 && (
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <CsvUpload onUploadSuccess={handleCsvUploadSuccess} />
               {csvUploaded && (
                 <Typography sx={{ mt: 2 }} color="success.main">
-                  CSV uploaded! You can now use the chat widget in the bottom right corner.
+                  CSV uploaded! You can now use the chat widget and anomaly detection.
                 </Typography>
               )}
             </Box>
           )}
-          {tab === 2 && <BannerVisuals />}
+          {tab === 2 && (
+            <Box sx={{ width: '100%' }}>
+              <Tabs
+                value={bannerSubTab}
+                onChange={(e, v) => setBannerSubTab(v)}
+                centered
+                sx={{ mb: 2 }}
+              >
+                <Tab label="Servier Visuals" />
+                <Tab label="AUV Visuals" />
+              </Tabs>
+              {bannerSubTab === 0 && <ServierBannerVisuals />}
+              {bannerSubTab === 1 && <AUVBannerVisuals />}
+            </Box>
+          )}
+
           {tab === 3 && <AnomalyDetection 
             sessionId={csvSessionId}
           />}

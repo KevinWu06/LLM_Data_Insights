@@ -1,18 +1,18 @@
 import React, { useRef, useEffect } from "react";
-import useBannerImageMap from '../BannerVisuals/excel_banner_images'
+import useBannerImageMapAUV from '../BannerVisuals/excel_banner_images_auv'
 
 // Can Change to suit needs
-const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-OutFilter/Dashboard1?:embed=y&:display_count=yes";
+const TABLEAU_URL = "https://public.tableau.com/views/CreativeWear-OutAUVFilter/Dashboard1?:embed=y&:display_count=yes";
 
 // IMPORTANT NOTE: To get filter values from Tableau, need to use the Tableau JS API.
 // The tableau-viz web component exposes the .viz property, which is a Tableau Viz object
 // Use that to get the filters and their values
 
-export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes, style }) {
+export default function TableauEmbedAUV({ selectedCheckboxes, setSelectedCheckboxes, style }) {
   const containerRef = useRef(null);
   const vizRef = useRef(null);
   const unregisterRef = useRef(null); // for cleanup
-  const { bannerImageMap, needsConsent, requestConsent } = useBannerImageMap();
+  const { bannerImageMap, needsConsent, requestConsent } = useBannerImageMapAUV();
 
   // Helper to get all worksheets in the dashboard
   async function getAllWorksheets(viz) {
@@ -49,7 +49,7 @@ export default function TableauEmbed({ selectedCheckboxes, setSelectedCheckboxes
           if (bannerColIdx !== -1) {
             for (const row of dataRows) {
               const bannerValue = row[bannerColIdx]?.formattedValue;
-              if (bannerValue) bannerSet.add(bannerValue);
+              if (bannerValue) bannerSet.add(bannerValue.trim());
             }
           }
         }
