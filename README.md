@@ -59,7 +59,9 @@ Web application to support LLM-driven data insights
     Sample Input: 
 
     <pre style="white-space: pre-wrap;">
-    Hi, how are you? The weather is beautiful today! How many columns are in the table? Which banner (bannerCTA) had the highest CTR, defined by total clicks divided by total impressions? Can you give me some insights about the data in the table?
+    Hi, how are you? The weather is beautiful today! How many columns are in the table? 
+    Which banner (bannerCTA) had the highest CTR, defined by total clicks divided by total 
+    impressions? Can you give me some insights about the data in the table?
     </pre>
 
     #### Logic Walkthough
