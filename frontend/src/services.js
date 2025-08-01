@@ -31,3 +31,12 @@ export const uploadCSV = (formData) => {
 
   return axios.post(url, formData);
 };
+
+export const getBannerNames = async (session_id) => {
+  const url = API_GATEWAY + '/get_banner_names';
+  return axios.get(url, {
+    params: { session_id },
+    withCredentials: true,
+  });
+};
+

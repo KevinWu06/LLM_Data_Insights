@@ -683,6 +683,17 @@ async def ask(request: AskRequest):
     answer = call_llm(request)
     return AskResponse(answer=answer)
 
+@app.get("/get_banner_names")
+async def get_banner_names(session_id: Optional[str] = None):
+    """
+    Endpoint to get the unique banner names for the uploaded dataset.
+    """
+    if not session_id or session_id not in csv_data:
+        return JSONResponse(status_code=400, content={"error": "No CSV file uploaded"})
+
+    unique_banners = csv_data[session_id]['.BannerCTA'].unique().tolist()
+    return JSONResponse(status_code=200, content={"banner_names": unique_banners})
+
 @app.post("/anomaly_detection")
 async def anomalyDetection(request: AnomalyDetectionRequest):
     """

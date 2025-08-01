@@ -1,50 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, FormControl, InputLabel, Select, MenuItem, TextField, Button, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
-import { SendAnomalyDetectionAPI } from '../services';
+import { getBannerNames, SendAnomalyDetectionAPI } from '../services';
 import Plot from 'react-plotly.js'
 
-const bannerOptions = [
-  "Improved PFS",
-  "#1 Prescribed" ,
-  "Improved mOS" ,
-  "Go Deeper",
-  "Newly Diagnosed CR" ,
-  "Now Approved (Anim.)" ,
-  "Now Approved (Stat.)",
-  "MDS Now Approved" ,
-  "MDS New Treatment",
-  "Rob Testimonial (Anim.)" ,
-  "Glioma DSA",
-  "ASH Branded",
-  "KOL",
-  "Promotional HCP (Anim.)",
-  "Promotional HCP (Stat.)",
-  "R1",
-  "Testing" ,
-  "Testing (V1)",
-  "US-00818",
-  "First-in-class",
-  "Laser Video",
-  "FDA Approved",
-  "CR and DOCR",
-  "Legacy Banner",
-  "mlDH1 BioPharm",
-  "Rob Testimonial (Stat.)",
-  "US-02033",
-  "Testing (V2)",
-  "Transfus. Indep.",
-  "Unbranded"  
-];
+// If the user tries to detect anomalies without uploading a CSV, show an error message.
+  // This logic is handled in handleDetectAnomalies below.
 
 export default function AnomalyDetection( {sessionId} ) {
-  const [anomalyBanner, setAnomalyBanner] = useState('Go Deeper');
+  const [anomalyBanner, setAnomalyBanner] = useState('');
   const [anomalyOverUnder, setAnomalyOverUnder] = useState(0.3);
   const [anomalyWindow, setAnomalyWindow] = useState(7);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState(null);
+  const [bannerOptions, setBannerOptions] = useState([]);
+  const [bannerLoading, setBannerLoading] = useState(false);
+  const [bannerError, setBannerError] = useState(null);
+  const [needsCSVUpload, setNeedsCSVUpload] = useState(false);  // NEW state
 
+  useEffect(() => {
+    const fetchBannerNames = async () => {
+      setBannerLoading(true);
+      setBannerError(null);
+      setNeedsCSVUpload(false);
+      try {
+        const res = await getBannerNames(sessionId);
+        const banners = res.data.banner_names || [];
+        setBannerOptions(banners);
+        if (banners.length > 0) {
+          setAnomalyBanner(banners[0]);
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 400) {
+          // Special case: no CSV uploaded
+          setNeedsCSVUpload(true);
+        } else {
+          setBannerError('Failed to load banner names');
+        }
+      } finally {
+        setBannerLoading(false);
+      }
+    };
+
+    fetchBannerNames();
+  }, [sessionId]);
+
+  // Prevent anomaly detection if no CSV uploaded
   const handleDetectAnomalies = async () => {
+    if (needsCSVUpload) {
+      setError('Please upload a CSV file first.');
+      return;
+    }
     setLoading(true);
     setError(null);
     setResponse(null);
@@ -57,6 +63,19 @@ export default function AnomalyDetection( {sessionId} ) {
       setLoading(false);
     }
   };
+
+  if (needsCSVUpload) {
+    return (
+      <Box sx={{ width: 600, mx: 'auto', mt: 8, p: 4, background: '#fff3f3', borderRadius: 3, boxShadow: 1, textAlign: 'center' }}>
+        <Typography variant="h6" color="error" sx={{ mb: 2 }}>
+          No CSV file uploaded.
+        </Typography>
+        <Typography variant="body1">
+          Please upload a CSV file to proceed with anomaly detection.
+        </Typography>
+      </Box>
+    );
+  }
 
   // Helper function for 2 significant digits
   function formatPctSig2(val) {
@@ -77,8 +96,11 @@ export default function AnomalyDetection( {sessionId} ) {
           value={anomalyBanner}
           label="Select Banner"
           onChange={e => setAnomalyBanner(e.target.value)}
+          disabled={bannerLoading || bannerError !== null}
         >
-          {bannerOptions.map(option => (
+          {bannerLoading && <MenuItem disabled>Loading banners...</MenuItem>}
+          {bannerError && <MenuItem disabled>{bannerError}</MenuItem>}
+          {!bannerLoading && !bannerError && bannerOptions.map(option => (
             <MenuItem key={option} value={option}>{option}</MenuItem>
           ))}
         </Select>
