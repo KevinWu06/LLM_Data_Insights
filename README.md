@@ -38,18 +38,19 @@ Web application to support LLM-driven data insights
 #### Tabs
 
 1. ##### Dashboard
-    On the righthand side of the dashboard, there are various filters. 
-    - The **Monthly > 10000** filter will filter each banner to only show months where the number of impressions is greater than 10000. To show all months, check both true and false. 
-    - The **Advertiser** filter will filter to only show indications and banners under that advertiser.
-    - The **Indication** filter will filter to only show banners under that indication.
-    - The **Banners** filter will filter to only display the graphs, charts, and visuals for the selected banners.
+    There are two tabs, one for AUV dashboard and one for Servier dashboard. 
+    On the righthand side of each dashboard, there are various filters. 
+    - The **Monthly > 10000** filter (both) will filter each banner to only show months where the number of impressions is greater than 10000. To show all months, check both true and false. 
+    - The **Advertiser** filter (both) will filter to only show indications and banners under that advertiser.
+    - The **Indication** filter (Servier only) will filter to only show banners under that indication.
+    - The **Banners** filter (both) will filter to only display the graphs, charts, and visuals for the selected banners.
     
-    Visuals for each banner will show up to the left of their corresponding graphs in the dashboard. To update the mapping between banner names and the visual links, go to the [Webapp Sharepoint Site](https://indegene123.sharepoint.com/sites/CopilotAPIWebApp/Shared%20Documents/Forms/AllItems.aspx) and find the Excel file called "Banner Visuals". After updating the mapping in the file, the updated visual will reflect in the dashboard after a minute or so. 
+    Visuals for each banner will show up to the left of their corresponding graphs in the dashboard. To update the mapping between banner names and the visual links, go to the [Webapp Sharepoint Site](https://indegene123.sharepoint.com/sites/CopilotAPIWebApp/Shared%20Documents/Forms/AllItems.aspx) and find the Excel files called "Banner Visuals Servier" and "Banner Visuals AUV". After updating the mapping in oe of the files, the updated visual will reflect in the corresponding dashboard after a minute or so. 
     
     The banner name **should not** be changed, as it is directly extracted from the Tableau dashboard. Since the dashboard does not dynamically update with changes, modifying the banner name may cause mismatches between the dashboard and the lookup map.
-2. ##### CSV Upload
+3. ##### CSV Upload
     Click "Choose CSV File", select the desired file, ad then click "Upload". The CSV file will need to be uploaded before the chatbot and anomaly detection services can be used. If the user attempts to use the services when a CSV is not uploaded, then the user will be prompted to upload a CSV. 
-3. ##### Chatbot
+4. ##### Chatbot
     The chatbot can be accessed via a circular icon with a message icon at the bottom right of the screen. Clicking the icon opens a chat window where the user can interact with the chatbot to ask questions about a dataset. The chatbot follows the below logic pipeline/flow in interacting with the user. 
 
     ![Chatbot Flow](https://i.imgur.com/GZAuKqQ.jpg)
@@ -135,9 +136,9 @@ Web application to support LLM-driven data insights
      - Free Gemini Tier is generally unable to process too many rows and data table sizes sent to the LLM should generally be limited to less than 500 rows. The LLM may also occasionally fail to return a response or timeout without error. Retrying may be necessary.
      - The chatbot is able to generate insights, but should not be relied on to perform extensive data analytics work.
      - The model can make arithmetic errors, especially with floating point divisions or large numbers. Always verify calculations if precision matters.
-4. ##### Banner Visuals
-    This is a display of all available banner visuals. 
-5. ##### Anomaly Detection
+5. ##### Banner Visuals
+    This is a display of all available banner visuals. There is a tab for AUV and a tab for Servier, and the corresponding banners are under the corresponding tabs.
+6. ##### Anomaly Detection
     This uses daily banner data for clicks and impressions and detects whether or not there are any anomalies. An event is considered to be an anomaly if for two consecutive days, the banner CTR falls outside X% within the moving average CTR (Total clicks / Total impressions) over the last Y days. X and Y, as well as the banner, are inputted by the user. 
 
     The following columns, with the exact names, MUST be present in the dataset:
