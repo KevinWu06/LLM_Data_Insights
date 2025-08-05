@@ -139,7 +139,7 @@ Web application to support LLM-driven data insights
 5. ##### Banner Visuals
     This is a display of all available banner visuals. There is a tab for AUV and a tab for Servier, and the corresponding banners are under the corresponding tabs.
 6. ##### Anomaly Detection
-    This uses daily banner data for clicks and impressions and detects whether or not there are any anomalies. An event is considered to be an anomaly if for two consecutive days, the banner CTR falls outside X% within the moving average CTR (Total clicks / Total impressions) over the last Y days. X and Y, as well as the banner, are inputted by the user. 
+    This uses daily banner data for clicks and impressions and detects whether or not there are any anomalies. An event is considered to be an anomaly if for two consecutive days (this can be changed in the code in anomaly_detection.py), the banner CTR falls outside X% within the moving average CTR (Total clicks / Total impressions) over the last Y days. X and Y, as well as the banner, are inputted by the user. 
 
     The following columns, with the exact names, MUST be present in the dataset:
     ```
