@@ -1,9 +1,6 @@
 import axios from 'axios'
 
-var API_GATEWAY = (() => {
-    // NOTE: point to local backend
-    return `http://localhost:8000`;
-  })();
+var API_GATEWAY = process.env.REACT_APP_API_URL;
 
 export const SendQueryAPI = async (query, session_id) => {
   const url = API_GATEWAY + '/ask';
