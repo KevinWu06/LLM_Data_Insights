@@ -1,6 +1,7 @@
 import { useMsal } from "@azure/msal-react";
 import * as XLSX from "xlsx";
 import { useEffect, useState } from "react";
+import { InteractionRequiredAuthError } from '@azure/msal-browser';
 
 function useBannerImageMapServier() {
   const { instance, accounts } = useMsal();
@@ -20,12 +21,25 @@ function useBannerImageMapServier() {
     async function fetchExcel() {
       const account = accounts[0];
       try {
-        const response = await instance.acquireTokenSilent({
-          scopes: ["Files.Read.All", "Sites.Read.All"], // Updated scopes
-          account,
-        });
-        const accessToken = response.accessToken;
-
+        let accessToken;
+        try {
+          const response = await instance.acquireTokenSilent({
+            scopes: ["Files.Read.All", "Sites.Read.All"],
+            account,
+          });
+          accessToken = response.accessToken;
+        } catch (error) {
+          if (error instanceof InteractionRequiredAuthError) {
+            // Popup to request consent
+            const response = await instance.acquireTokenPopup({
+              scopes: ["Files.Read.All", "Sites.Read.All"],
+              account,
+            });
+            accessToken = response.accessToken;
+          } else {
+            throw error;
+          }
+        }
         const siteIdFetched = await getSiteId(accessToken);
         setSiteId(siteIdFetched);
         const driveIdFetched = await getDriveId(accessToken, siteIdFetched);
@@ -55,20 +69,35 @@ function useBannerImageMapServier() {
           console.warn("[BannerImageMap] Polling skipped: driveId not ready yet.");
           return;
         }
-
+      
         const account = accounts[0];
         try {
-          const response = await instance.acquireTokenSilent({
-            scopes: ["Files.Read.All", "Sites.Read.All"],
-            account,
-          });
-          const accessToken = response.accessToken;
-
+          let accessToken;
+          try {
+            const response = await instance.acquireTokenSilent({
+              scopes: ["Files.Read.All", "Sites.Read.All"],
+              account,
+            });
+            accessToken = response.accessToken;
+          } catch (silentError) {
+            if (silentError instanceof InteractionRequiredAuthError) {
+              // fallback to interactive popup
+              const response = await instance.acquireTokenPopup({
+                scopes: ["Files.Read.All", "Sites.Read.All"],
+                account,
+              });
+              accessToken = response.accessToken;
+            } else {
+              throw silentError;
+            }
+          }
+      
+          // Use accessToken to check metadata
           const metaUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${itemPath}`;
           const metaResp = await fetch(metaUrl, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
-
+      
           if (!metaResp.ok) {
             console.error(
               "[BannerImageMap] Polling: failed to get file metadata:",
@@ -77,7 +106,7 @@ function useBannerImageMapServier() {
             );
             return;
           }
-
+      
           const meta = await metaResp.json();
           if (
             meta.lastModifiedDateTime &&
@@ -90,7 +119,7 @@ function useBannerImageMapServier() {
         } catch (err) {
           console.error("[BannerImageMap] Polling error:", err);
         }
-      }, POLL_INTERVAL);
+      }, POLL_INTERVAL);      
     }
 
     return () => {
