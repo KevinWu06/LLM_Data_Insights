@@ -626,7 +626,7 @@ def call_llm(request: AskRequest) -> str:
     response = responseNAQ + "\n" + responseTSQ + "\n" + responseDQ
     return response
 
-@app.post("/upload_csv")
+@app.post("/api/upload_csv")
 async def upload_csv(file: UploadFile = File(...)):
     """
     Endpoint to upload and register a CSV file for later analysis.
@@ -660,7 +660,7 @@ async def upload_csv(file: UploadFile = File(...)):
             "columns": df.columns.tolist(), 
              "session_id": session_id, }
 
-@app.post("/ask", response_model=AskResponse)
+@app.post("/api/ask", response_model=AskResponse)
 async def ask(request: AskRequest):
     """
     Endpoint to query the uploaded dataset using natural language.
@@ -683,7 +683,7 @@ async def ask(request: AskRequest):
     answer = call_llm(request)
     return AskResponse(answer=answer)
 
-@app.get("/get_banner_names")
+@app.get("/api/get_banner_names")
 async def get_banner_names(session_id: Optional[str] = None):
     """
     Endpoint to get the unique banner names for the uploaded dataset.
@@ -694,7 +694,7 @@ async def get_banner_names(session_id: Optional[str] = None):
     unique_banners = csv_data[session_id]['.BannerCTA'].unique().tolist()
     return JSONResponse(status_code=200, content={"banner_names": unique_banners})
 
-@app.post("/anomaly_detection")
+@app.post("/api/anomaly_detection")
 async def anomalyDetection(request: AnomalyDetectionRequest):
     """
     Endpoint to detect anomalies in a numeric column using a moving average and over-under approach.
